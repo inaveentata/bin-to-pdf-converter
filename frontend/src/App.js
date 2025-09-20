@@ -19,7 +19,11 @@ function App() {
     formData.append('file', file);
 
     try {
-      const response = await fetch('http://localhost:5000/convert', {
+      const apiUrl = process.env.NODE_ENV === 'production' 
+        ? '/api/convert' 
+        : 'http://localhost:5000/convert';
+      
+      const response = await fetch(apiUrl, {
         method: 'POST',
         body: formData,
       });
