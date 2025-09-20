@@ -1,37 +1,17 @@
-from http.server import BaseHTTPRequestHandler
-import json
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 
-class handler(BaseHTTPRequestHandler):
-    def do_OPTIONS(self):
-        self.send_response(200)
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
-        self.end_headers()
+app = Flask(__name__)
+CORS(app)
 
-    def do_POST(self):
-        try:
-            # Send a simple test response
-            self.send_response(200)
-            self.send_header('Content-Type', 'application/json')
-            self.send_header('Access-Control-Allow-Origin', '*')
-            self.end_headers()
-            
-            response = {"message": "API is working!", "status": "success"}
-            self.wfile.write(json.dumps(response).encode())
-            
-        except Exception as e:
-            self.send_error(500, f"Error: {str(e)}")
+@app.route('/', methods=['GET', 'POST'])
+def convert():
+    if request.method == 'GET':
+        return jsonify({"message": "API is working!", "status": "success"})
     
-    def do_GET(self):
-        try:
-            self.send_response(200)
-            self.send_header('Content-Type', 'application/json')
-            self.send_header('Access-Control-Allow-Origin', '*')
-            self.end_headers()
-            
-            response = {"message": "API endpoint is live!", "status": "success"}
-            self.wfile.write(json.dumps(response).encode())
-            
-        except Exception as e:
-            self.send_error(500, f"Error: {str(e)}")
+    # For POST requests (file upload)
+    return jsonify({"message": "POST request received", "status": "success"})
+
+# Export the Flask app for Vercel
+def handler(request):
+    return app(request.environ, lambda *args: None)
