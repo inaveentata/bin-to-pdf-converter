@@ -1,12 +1,10 @@
 import os
 import re
 import tempfile
-from flask import Flask, request, send_file, jsonify
-from flask_cors import CORS
+import json
+import base64
+from http.server import BaseHTTPRequestHandler
 from fpdf import FPDF
-
-app = Flask(__name__)
-CORS(app)
 
 # Supported encodings (order matters, first successful one will be used)
 ENCODINGS = ["utf-8", "iso-8859-1", "cp1252", "ascii"]
@@ -52,51 +50,93 @@ def convert_to_pdf(text, output_path):
         pdf.cell(0, 4, line, ln=True)
     pdf.output(output_path)
 
-@app.route('/convert', methods=['POST'])
-def convert():
-    """
-    Expects a multipart/form‑data request with a file field named 'file'.
-    Returns the generated PDF as an attachment.
-    """
-    if "file" not in request.files:
-        return jsonify({"error": "No file part in the request"}), 400
+class handler(BaseHTTPRequestHandler):
+    def do_OPTIONS(self):
+        self.send_response(200)
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self.end_headers()
 
-    uploaded = request.files["file"]
-    if uploaded.filename == "":
-        return jsonify({"error": "No selected file"}), 400
-
-    # Save uploaded file to a temporary location
-    with tempfile.NamedTemporaryFile(delete=False) as tmp:
-        uploaded.save(tmp.name)
-        tmp_path = tmp.name
-
-    try:
-        text = read_text_file(tmp_path)
-        cleaned = clean_text(text)
-
-        # Prepare output path
-        base_name = os.path.splitext(uploaded.filename)[0]
-        output_path = tempfile.mktemp(suffix='.pdf')
-
-        convert_to_pdf(cleaned, output_path)
-
-        return send_file(
-            output_path,
-            as_attachment=True,
-            download_name=f"{base_name}.pdf",
-            mimetype="application/pdf",
-        )
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-    finally:
-        # Clean up temporary files
+    def do_POST(self):
         try:
-            os.remove(tmp_path)
-            if 'output_path' in locals():
-                os.remove(output_path)
-        except OSError:
-            pass
-
-# This is the handler that Vercel will use
-def handler(request):
-    return app(request.environ, lambda *args: None)
+            # Parse multipart form data
+            content_length = int(self.headers['Content-Length'])
+            post_data = self.rfile.read(content_length)
+            
+            # Simple boundary parsing (this is a basic implementation)
+            boundary = None
+            for line in self.headers.get_all('Content-Type', []):
+                if 'boundary=' in line:
+                    boundary = line.split('boundary=')[1]
+                    break
+            
+            if not boundary:
+                self.send_error(400, "No boundary found")
+                return
+                
+            # Parse the multipart data
+            parts = post_data.split(f'--{boundary}'.encode())
+            
+            file_data = None
+            filename = None
+            
+            for part in parts:
+                if b'Content-Disposition: form-data' in part:
+                    if b'filename=' in part:
+                        # Extract filename
+                        filename_line = [line for line in part.split(b'\r\n') if b'filename=' in line][0]
+                        filename = filename_line.decode().split('filename="')[1].split('"')[0]
+                        
+                        # Extract file data (everything after the headers)
+                        file_data_start = part.find(b'\r\n\r\n') + 4
+                        file_data = part[file_data_start:]
+                        # Remove trailing boundary markers
+                        file_data = file_data.rstrip(b'\r\n--')
+                        break
+            
+            if not file_data or not filename:
+                self.send_error(400, "No file uploaded")
+                return
+            
+            # Save uploaded file to a temporary location
+            with tempfile.NamedTemporaryFile(delete=False) as tmp:
+                tmp.write(file_data)
+                tmp_path = tmp.name
+            
+            try:
+                text = read_text_file(tmp_path)
+                cleaned = clean_text(text)
+                
+                # Prepare output path
+                base_name = os.path.splitext(filename)[0]
+                output_path = tempfile.mktemp(suffix='.pdf')
+                
+                convert_to_pdf(cleaned, output_path)
+                
+                # Read the generated PDF
+                with open(output_path, 'rb') as pdf_file:
+                    pdf_data = pdf_file.read()
+                
+                # Send response
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/pdf')
+                self.send_header('Content-Disposition', f'attachment; filename="{base_name}.pdf"')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.send_header('Content-Length', str(len(pdf_data)))
+                self.end_headers()
+                self.wfile.write(pdf_data)
+                
+            except Exception as e:
+                self.send_error(500, f"Conversion error: {str(e)}")
+            finally:
+                # Clean up temporary files
+                try:
+                    os.remove(tmp_path)
+                    if 'output_path' in locals():
+                        os.remove(output_path)
+                except OSError:
+                    pass
+                    
+        except Exception as e:
+            self.send_error(500, f"Server error: {str(e)}")
