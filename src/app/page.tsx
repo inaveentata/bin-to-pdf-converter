@@ -1,59 +1,59 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
+import { useState } from 'react';
 
 export default function Home() {
-  const [file, setFile] = useState<File | null>(null)
-  const [downloadUrl, setDownloadUrl] = useState<string | null>(null)
-  const [isConverting, setIsConverting] = useState(false)
+  const [file, setFile] = useState<File | null>(null);
+  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+  const [isConverting, setIsConverting] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0] || null
-    setFile(selectedFile)
-    setDownloadUrl(null)
-  }
+    const selectedFile = e.target.files?.[0] || null;
+    setFile(selectedFile);
+    setDownloadUrl(null);
+  };
 
   const handleSubmit = async () => {
     if (!file) {
-      alert('Please select a .bin file first.')
-      return
+      alert('Please select a .bin file first.');
+      return;
     }
 
-    setIsConverting(true)
-    const formData = new FormData()
-    formData.append('file', file)
+    setIsConverting(true);
+    const formData = new FormData();
+    formData.append('file', file);
 
     try {
       const response = await fetch('/api/convert', {
         method: 'POST',
         body: formData,
-      })
+      });
 
       if (!response.ok) {
-        const err = await response.json()
-        alert('Conversion failed: ' + (err.error || 'Unknown error'))
-        return
+        const err = await response.json();
+        alert('Conversion failed: ' + (err.error || 'Unknown error'));
+        return;
       }
 
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
-      setDownloadUrl(url)
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      setDownloadUrl(url);
     } catch (e) {
-      console.error(e)
-      alert('An error occurred during conversion.')
+      console.error(e);
+      alert('An error occurred during conversion.');
     } finally {
-      setIsConverting(false)
+      setIsConverting(false);
     }
-  }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
-        <h1 className="text-3xl font-bold text-gray-900 text-center mb-8">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="max-w-md sm:max-w-lg w-full bg-white rounded-lg shadow-md p-4 sm:p-6 md:p-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 text-center mb-6 sm:mb-8">
           Bin to PDF Converter
         </h1>
-        
-        <div className="space-y-6">
+
+        <div className="space-y-4 sm:space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Choose File
@@ -62,7 +62,7 @@ export default function Home() {
               type="file"
               accept=".bin"
               onChange={handleChange}
-              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              className="block w-full text-sm text-gray-500 file:mr-2 sm:file:mr-4 file:py-2 file:px-3 sm:file:px-4 file:rounded-full file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
             {file && (
               <p className="mt-2 text-sm text-gray-600">
@@ -74,18 +74,18 @@ export default function Home() {
           <button
             onClick={handleSubmit}
             disabled={!file || isConverting}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base font-medium"
           >
             {isConverting ? 'Converting...' : 'Convert to PDF'}
           </button>
 
           {downloadUrl && (
-            <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-md">
+            <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-green-50 border border-green-200 rounded-md">
               <p className="text-sm text-green-700 mb-2">Conversion successful!</p>
               <a
                 href={downloadUrl}
                 download={file?.name.replace(/\.[^.]+$/, '.pdf')}
-                className="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700"
+                className="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 w-full sm:w-auto justify-center"
               >
                 Download PDF
               </a>
@@ -94,5 +94,5 @@ export default function Home() {
         </div>
       </div>
     </div>
-  )
+  );
 }
