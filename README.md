@@ -1,62 +1,50 @@
 # Bin-to-PDF Converter
 
-A full-stack web application that converts binary files (`.bin`) to PDF format. The application consists of a React frontend and a Python backend with both REST API and standalone conversion capabilities.
+A modern Next.js web application that converts binary files (`.bin`) to PDF format. Built with TypeScript, Tailwind CSS, and deployed on Vercel for optimal performance.
 
 ## Project Structure
 
 ```
 bin-to-pdf-converter/
-├── frontend/                 # React frontend application
-│   ├── public/              # Static files
-│   ├── src/                 # React source code
-│   ├── package.json         # Frontend dependencies
-│   └── README.md            # Frontend documentation
-├── backend/                 # Python backend application
-│   ├── app.py              # Flask API server
-│   ├── convert_bin_to_pdf.py # Standalone conversion script
-│   ├── requirements.txt    # Backend dependencies
-│   ├── input/              # Input directory for .bin files
-│   ├── output/             # Output directory for generated PDFs
-│   ├── venv/               # Python virtual environment
-│   └── README.md           # Backend documentation
+├── src/
+│   └── app/
+│       ├── page.tsx         # Main React component
+│       ├── layout.tsx       # App layout
+│       ├── globals.css      # Global styles
+│       └── api/
+│           └── convert/
+│               └── route.ts # API endpoint for conversion
+├── public/                  # Static assets
+├── package.json             # Dependencies and scripts
+├── next.config.js          # Next.js configuration
+├── tailwind.config.ts      # Tailwind CSS configuration
+├── tsconfig.json           # TypeScript configuration
 └── README.md               # This file
 ```
 
 ## Quick Start
 
-### 1. Backend Setup
+### Local Development
 
 ```bash
-# Navigate to backend directory
-cd backend
-
-# Create and activate virtual environment
-python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Start the Flask API server
-python app.py
-```
-
-The backend API will be available at `http://localhost:5000`
-
-### 2. Frontend Setup
-
-```bash
-# Navigate to frontend directory (in a new terminal)
-cd frontend
-
 # Install dependencies
 npm install
 
 # Start the development server
-npm start
+npm run dev
 ```
 
-The frontend will be available at `http://localhost:3000`
+The application will be available at `http://localhost:3000`
+
+### Production Build
+
+```bash
+# Build for production
+npm run build
+
+# Start production server
+npm start
+```
 
 ## Usage
 
@@ -67,24 +55,12 @@ The frontend will be available at `http://localhost:3000`
 3. Click "Convert to PDF"
 4. Download the generated PDF file
 
-### Standalone Conversion
-
-For batch processing without the web interface:
-
-```bash
-cd backend
-source venv/bin/activate
-python convert_bin_to_pdf.py
-```
-
-This will process all files in the `input/` directory and generate PDFs in the `output/` directory.
-
 ### API Usage
 
 You can also use the API directly:
 
 ```bash
-curl -X POST -F "file=@yourfile.bin" http://localhost:5000/convert --output result.pdf
+curl -X POST -F "file=@yourfile.bin" http://localhost:3000/api/convert --output result.pdf
 ```
 
 ## Features
@@ -98,33 +74,27 @@ curl -X POST -F "file=@yourfile.bin" http://localhost:5000/convert --output resu
 
 ## Dependencies
 
-### Backend
-- Python 3.11+
-- Flask 3.0.3
-- fpdf 1.7.2
-
-### Frontend
-- Node.js 14+
-- React 19.1.1
-- Create React App
+- Node.js 18+
+- Next.js 15.0.3
+- React 18
+- TypeScript 5
+- Tailwind CSS
+- jsPDF 2.5.1
 
 ## Development
 
-### Backend Development
+### Next.js App Router
 
-The backend provides two interfaces:
-- **Flask API** (`app.py`): RESTful web service for file conversion
-- **Standalone script** (`convert_bin_to_pdf.py`): Command-line batch processor
-
-### Frontend Development
-
-The frontend is built with Create React App and provides a simple file upload interface that communicates with the backend API.
+The application uses Next.js 13+ App Router with:
+- **Frontend**: React components with TypeScript and Tailwind CSS
+- **API Routes**: Server-side API endpoints for file processing
+- **Type Safety**: Full TypeScript support throughout the application
 
 ## Troubleshooting
 
-- **Backend not starting**: Ensure Python virtual environment is activated and dependencies are installed
-- **Frontend can't connect**: Verify the backend server is running on port 5000
-- **File conversion fails**: Check file permissions and ensure input files are readable
+- **Build errors**: Ensure Node.js 18+ is installed and run `npm install`
+- **API errors**: Check the browser console for detailed error messages
+- **File conversion fails**: Ensure the uploaded file is a valid binary file
 - **Encoding issues**: The application tries multiple encodings automatically
 
 ## License
